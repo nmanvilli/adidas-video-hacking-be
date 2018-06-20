@@ -9,9 +9,6 @@ const rn = require('random-number');
 // FS extra
 var fs = require('fs-extra');
 
-// Kew
-var kew = require('kew');
-
 // FS Copy File Sync
 const copyFileSync = require('fs-copy-file-sync');
 
