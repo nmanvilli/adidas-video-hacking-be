@@ -141,7 +141,7 @@ const generateVideo = (req,res) => {
         .inputFPS(8)
         .output('./vid/video.mp4')
         .outputFPS(8)
-        .input('./mp3/horizons.mp3')
+        .input('./mp3/music.mp3')
         .run();
 
     res.send();
