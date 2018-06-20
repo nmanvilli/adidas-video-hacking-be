@@ -3,7 +3,7 @@
 const express = require('express');
 const app = express();
 
-//Random Number
+// Random number generator
 const rn = require('random-number');
 
 // FS extra
@@ -12,14 +12,15 @@ var fs = require('fs-extra');
 // FS Copy File Sync
 const copyFileSync = require('fs-copy-file-sync');
 
-// Fluent FFMpeg
+// FFMpeg and Fluent FFMpeg (video generation)
 var ffmpeg = require('fluent-ffmpeg');
 var ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-// UUID
+// UUID (random file name generation)
 const uuidv4 = require('uuid/v4');
 
+// Number of video frames
 var numOfFrames = 224;
 
 // Start listening on port 3000
@@ -27,10 +28,16 @@ app.listen(3000, () => {
     console.log('server ready')
 });
 
-// GET THREE RANDOM INDEXES
+
+
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+/*	GET RANDOM FRAMES SECTION
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+
+// Function to get random unique indexes from an array
 const getRandomIndexes = (numberOfIndexes, maxIndex) => {
 	randomIndexes = [];
-	for(var i = 1; i <= numberOfIndexes; i++){
+	for (var i = 1; i <= numberOfIndexes; i++) {
 		var random;
 		var wrong;
 		do{
@@ -54,7 +61,7 @@ const getRandomIndexes = (numberOfIndexes, maxIndex) => {
 	return randomIndexes;
 }
 
-// CREATE THE ARRAY WITH ALL JSON FRAMES 
+// Function to get an array containing all source frames
 function getFrameArray(){
 	return new Promise((resolve, reject) => {
 		var framesArray = [];
@@ -77,7 +84,7 @@ function getFrameArray(){
 	});
 }
 
-// GET ARRAY WITH 3 JSON ID + PATH
+// FUNCTION TO GET AN ARRAY OF 3 RANDOM SOURCE FRAMES
 const getRandomFrames = (req,res) => {
 
 	getFrameArray().then((allFrames) => {
@@ -97,9 +104,14 @@ const getRandomFrames = (req,res) => {
 
 }
 
+
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+/*	GENERATE VIDEO SECTION
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+
 const generateVideo = (req,res) => {
 
-
+	// For each frame...
     for(let frame = 0; frame <= (numOfFrames-1); frame++) {
 
         let paddedId = ''+frame;
@@ -107,6 +119,7 @@ const generateVideo = (req,res) => {
             paddedId = '0'+paddedId;
         }
 
+		// Get all variations from the corresponding folder
         let variationsFrameDir = __dirname +'/variations/'+ paddedId +'/';
         let folderFiles = [];
 
@@ -116,12 +129,13 @@ const generateVideo = (req,res) => {
             }
         });
 
+		// Choose one at random and copy it to the "selected-variations" folder
         var randFile = folderFiles[Math.floor( Math.random() * folderFiles.length )];
         copyFileSync(variationsFrameDir + randFile, __dirname +'/selected-variations/frame'+ paddedId +'.jpg')
     }
 
+	// Generate video from the "selected-variations"
     var command = ffmpeg();
-
     command
         .addInput('./selected-variations/frame%03d.jpg')
         .inputFPS(8)
@@ -134,7 +148,12 @@ const generateVideo = (req,res) => {
     
 }
 
-// RECEIVE IMAGE AS STRING AND SAVE IT AS FILE
+
+
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+/*	SAVE VARIATION SECTION
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+
 const saveVariation = (req,res) => {
     
     var idFrame = req.query.frame; // ID of the source frame
@@ -151,10 +170,18 @@ const saveVariation = (req,res) => {
 }
 
 
+
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+/*	ROUTES SECTION
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
 app.get('/get-random-frames', getRandomFrames);
 app.get('/generate-video', generateVideo);
 app.get('/save-variation', saveVariation);
 
+
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
+/*	UTILITIES SECTION
+/* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
 
 /*
 const createFakeVariations = (req,res) => {
