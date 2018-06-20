@@ -10,16 +10,20 @@ const rn = require('random-number');
 var fs = require('fs-extra');
 
 // Kew
-var Q = require('kew');
+var kew = require('kew');
+
+// FS Copy File Sync
+const copyFileSync = require('fs-copy-file-sync');
 
 // Fluent FFMpeg
 var ffmpeg = require('fluent-ffmpeg');
 var ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-// ???
-var framesArray = [];
+// UUID
+const uuidv4 = require('uuid/v4');
 
+var numOfFrames = 224;
 
 // Start listening on port 3000
 app.listen(3000, () => {
@@ -97,12 +101,32 @@ const getRandomFrames = (req,res) => {
 }
 
 const generateVideo = (req,res) => {
+
+
+    for(let frame = 0; frame <= (numOfFrames-1); frame++) {
+
+        let paddedId = ''+frame;
+        while( paddedId.length < 3) {
+            paddedId = '0'+paddedId;
+        }
+
+        let variationsFrameDir = __dirname +'/variations/'+ paddedId +'/';
+        let folderFiles = [];
+
+        fs.readdirSync(variationsFrameDir).forEach(file => {
+            if ( !file.startsWith('.') ) {
+                folderFiles.push(file);
+            }
+        });
+
+        var randFile = folderFiles[Math.floor( Math.random() * folderFiles.length )];
+        copyFileSync(variationsFrameDir + randFile, __dirname +'/selected-variations/frame'+ paddedId +'.jpg')
+    }
+
     var command = ffmpeg();
 
-    // Ci vorrebbe un loop che trova le variation e le aggiunge una ad una con addinput
-
     command
-        .addInput('./frames/frame%03d.jpg')
+        .addInput('./selected-variations/frame%03d.jpg')
         .inputFPS(8)
         .output('./vid/video.mp4')
         .outputFPS(8)
@@ -110,8 +134,45 @@ const generateVideo = (req,res) => {
         .run();
 
     res.send();
+    
 }
+
+// RECEIVE IMAGE AS STRING AND SAVE IT AS FILE
+const saveVariation = (req,res) => {
+    
+    var idFrame = req.query.frame; // ID of the source frame
+    var img = req.query.image; // Base 64 encoded variation
+    var randName = uuidv4(); // random file name
+    var fileName = __dirname + '/variations/'+ idFrame +'/'+ randName +'.jpg';
+    
+    var data = img.replace(/^data:image\/\w+;base64,/, "");
+	var buf = new Buffer(data, 'base64');
+	fs.writeFile(fileName, buf, function(err){
+		if (err) throw err;
+		res.send(fileName);
+    });
+}
+
 
 app.get('/get-random-frames', getRandomFrames);
 app.get('/generate-video', generateVideo);
-//app.get('/save-variation', saveVariation);
+app.get('/save-variation', saveVariation);
+
+
+/*
+const createFakeVariations = (req,res) => {
+    for(var i = 0; i <= 223; i++){
+
+        let paddedId = ''+i;
+        while( paddedId.length < 3) {
+            paddedId = '0'+paddedId;
+        }
+
+        let src = __dirname +'/frames/frame'+ paddedId +'.jpg';
+        let destDir = __dirname +'/variations/'+ paddedId +'/frame'+ paddedId +'.jpg';
+        copyFileSync(src, destDir);
+    }
+    res.send();
+}
+app.get('/fakeit', createFakeVariations);
+*/
