@@ -1,7 +1,33 @@
 
+// Server port and URL
+var port = 3000;
+var serverURL = 'http://localhost:'+port;
+
+var clientPort = 4200;
+var corsURL = 'http://localhost:'+clientPort;
+
 // Express
 const express = require('express');
+var cors = require('cors')
+var corsOptions = {
+	origin: corsURL,
+	optionsSuccessStatus: 200
+}
 const app = express();
+app.use(cors(corsOptions));
+app.use('/vid', express.static('vid'));
+app.use('/frames', express.static('frames'));
+app.use('/variations', express.static('variations'));
+
+// Body parser (for POST requests)
+/*
+var bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded());
+*/
+
+app.use(express.json({limit: '50mb'}));
+//app.use(express.urlencoded());
 
 // Random number generator
 const rn = require('random-number');
@@ -24,7 +50,7 @@ const uuidv4 = require('uuid/v4');
 var numOfFrames = 224;
 
 // Start listening on port 3000
-app.listen(3000, () => {
+app.listen(port, () => {
     console.log('server ready')
 });
 
@@ -72,7 +98,7 @@ function getFrameArray(){
 			} else {
 				for (var i in files) {
 					var id = files[i].replace('.jpg','');
-					var path = __dirname + '/frames' + '/' + files[i];
+					var path = serverURL + '/frames' + '/' + files[i];
 					if (files[i].startsWith('.')){
 						continue;
 					}
@@ -85,7 +111,7 @@ function getFrameArray(){
 }
 
 // FUNCTION TO GET AN ARRAY OF 3 RANDOM SOURCE FRAMES
-const getRandomFrames = (req,res) => {
+const getRandomFrames = (req, res) => {
 
 	getFrameArray().then((allFrames) => {
 		var maxIndex = allFrames.length;
@@ -109,7 +135,7 @@ const getRandomFrames = (req,res) => {
 /*	GENERATE VIDEO SECTION
 /* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
 
-const generateVideo = (req,res) => {
+const generateVideo = (req, res) => {
 
 	// For each frame...
     for(let frame = 0; frame <= (numOfFrames-1); frame++) {
@@ -120,7 +146,7 @@ const generateVideo = (req,res) => {
         }
 
 		// Get all variations from the corresponding folder
-        let variationsFrameDir = __dirname +'/variations/'+ paddedId +'/';
+        let variationsFrameDir = __dirname +'/variations/frame'+ paddedId +'/';
         let folderFiles = [];
 
         fs.readdirSync(variationsFrameDir).forEach(file => {
@@ -155,16 +181,20 @@ const generateVideo = (req,res) => {
 /* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
 
 const saveVariation = (req,res) => {
-    
-    var idFrame = req.query.frame; // ID of the source frame
-    var img = req.query.image; // Base 64 encoded variation
+    var idFrame = req.body.frame; // ID of the source frame
+	var img = req.body.image; // Base 64 encoded variation
+
     var randName = uuidv4(); // random file name
     var fileName = __dirname + '/variations/'+ idFrame +'/'+ randName +'.jpg';
-    
+	console.log('Filename: '+fileName);
+
     var data = img.replace(/^data:image\/\w+;base64,/, "");
 	var buf = new Buffer(data, 'base64');
 	fs.writeFile(fileName, buf, function(err){
-		if (err) throw err;
+		if (err) {
+			console.log('saveVariation\'s writeFile error');
+			throw err;
+		}
 		res.send(fileName);
     });
 }
@@ -176,7 +206,7 @@ const saveVariation = (req,res) => {
 /* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
 app.get('/get-random-frames', getRandomFrames);
 app.get('/generate-video', generateVideo);
-app.get('/save-variation', saveVariation);
+app.post('/save-variation', saveVariation);
 
 
 /* ---------- ---------- ---------- ---------- ---------- ---------- ---------- */
@@ -185,18 +215,24 @@ app.get('/save-variation', saveVariation);
 
 /*
 const createFakeVariations = (req,res) => {
-    for(var i = 0; i <= 223; i++){
+    for(let i = 0; i <= 223; i++){
 
         let paddedId = ''+i;
         while( paddedId.length < 3) {
             paddedId = '0'+paddedId;
         }
 
-        let src = __dirname +'/frames/frame'+ paddedId +'.jpg';
-        let destDir = __dirname +'/variations/'+ paddedId +'/frame'+ paddedId +'.jpg';
-        copyFileSync(src, destDir);
+		let srcFile = __dirname +'/frames/frame'+ paddedId +'.jpg';
+
+		let variationFolder = __dirname +'/variations/frame'+ paddedId;
+		if (! fs.existsSync(variationFolder) ) {
+			fs.mkdirSync(variationFolder);
+		}
+
+        let destFile = variationFolder + '/frame' + paddedId + '.jpg';
+        copyFileSync(srcFile, destFile);
     }
     res.send();
 }
-app.get('/fakeit', createFakeVariations);
+app.get('/create-fake-variations', createFakeVariations);
 */

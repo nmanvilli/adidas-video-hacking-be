@@ -18,6 +18,8 @@
   "homepage": "https://gitlab.com/n-manvilli/adidas-video-hacking-be#README",
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.15",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
     "express": "^4.16.3",
     "fluent-ffmpeg": "^2.1.2",
     "fs-copy-file-sync": "^1.1.1",
