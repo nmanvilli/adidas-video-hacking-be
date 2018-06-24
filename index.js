@@ -184,18 +184,18 @@ const saveVariation = (req,res) => {
     var idFrame = req.body.frame; // ID of the source frame
 	var img = req.body.image; // Base 64 encoded variation
 
-    var randName = uuidv4(); // random file name
-    var fileName = __dirname + '/variations/'+ idFrame +'/'+ randName +'.jpg';
+    var fileName = uuidv4() + '.jpg'; // random file name
+    var filePath = __dirname + '/variations/'+ idFrame +'/'+ fileName;
 	console.log('Filename: '+fileName);
 
     var data = img.replace(/^data:image\/\w+;base64,/, "");
 	var buf = new Buffer(data, 'base64');
-	fs.writeFile(fileName, buf, function(err){
+	fs.writeFile(filePath, buf, function(err){
 		if (err) {
 			console.log('saveVariation\'s writeFile error');
 			throw err;
 		}
-		res.send(fileName);
+		res.send(serverURL + '/variations/'+ idFrame +'/'+ fileName);
     });
 }
 
