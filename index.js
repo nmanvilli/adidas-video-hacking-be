@@ -3,10 +3,10 @@
 var port = 3000;
 var serverURL = 'http://localhost:'+port;
 
-var clientPort = 4200;
-var corsURL = 'http://localhost:'+clientPort;
+// CORS URL
+var corsURL = 'http://localhost:4200';
 
-// Express
+// Express (with CORS)
 const express = require('express');
 var cors = require('cors')
 var corsOptions = {
@@ -15,19 +15,14 @@ var corsOptions = {
 }
 const app = express();
 app.use(cors(corsOptions));
+
+// Express - JSON post request limit
+app.use(express.json({limit: '50mb'}));
+
+// Express - Static files routes
 app.use('/vid', express.static('vid'));
 app.use('/frames', express.static('frames'));
 app.use('/variations', express.static('variations'));
-
-// Body parser (for POST requests)
-/*
-var bodyParser = require('body-parser');
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded());
-*/
-
-app.use(express.json({limit: '50mb'}));
-//app.use(express.urlencoded());
 
 // Random number generator
 const rn = require('random-number');
