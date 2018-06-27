@@ -42,7 +42,8 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const uuidv4 = require('uuid/v4');
 
 // Number of video frames
-var numOfFrames = 224;
+var numOfFrames = 255;
+var numOfFramesTotal = 311;
 
 // Start listening on port 3000
 app.listen(port, () => {
@@ -133,7 +134,7 @@ const getRandomFrames = (req, res) => {
 const generateVideo = (req, res) => {
 
 	// For each frame...
-    for(let frame = 0; frame <= (numOfFrames-1); frame++) {
+    for(let frame = 0; frame < numOfFrames; frame++) {
 
         let paddedId = ''+frame;
         while( paddedId.length < 3) {
@@ -153,7 +154,15 @@ const generateVideo = (req, res) => {
 		// Choose one at random and copy it to the "selected-variations" folder
         var randFile = folderFiles[Math.floor( Math.random() * folderFiles.length )];
         copyFileSync(variationsFrameDir + randFile, __dirname +'/selected-variations/frame'+ paddedId +'.jpg')
-    }
+	}
+	for(let frame = numOfFrames; frame < numOfFramesTotal; frame++) {
+	
+		let paddedId = ''+frame;
+		while( paddedId.length < 3) {
+			paddedId = '0'+paddedId;
+		}
+		copyFileSync(__dirname +'/trailing-frame.jpg', __dirname +'/selected-variations/frame'+ paddedId +'.jpg');
+	}
 
 	// Generate video from the "selected-variations"
     var command = ffmpeg();
@@ -210,7 +219,7 @@ app.post('/save-variation', saveVariation);
 
 /*
 const createFakeVariations = (req,res) => {
-    for(let i = 0; i <= 223; i++){
+    for(let i = 0; i < numOfFrames; i++){
 
         let paddedId = ''+i;
         while( paddedId.length < 3) {
@@ -226,7 +235,7 @@ const createFakeVariations = (req,res) => {
 
         let destFile = variationFolder + '/frame' + paddedId + '.jpg';
         copyFileSync(srcFile, destFile);
-    }
+	}
     res.send();
 }
 app.get('/create-fake-variations', createFakeVariations);
