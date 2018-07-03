@@ -240,3 +240,31 @@ const createFakeVariations = (req,res) => {
 }
 app.get('/create-fake-variations', createFakeVariations);
 */
+
+/*
+const deleteFakeVariations = (req,res) => {
+	let message = '';
+    for(let i = 0; i < numOfFrames; i++){
+
+        let paddedId = ''+i;
+        while( paddedId.length < 3) {
+            paddedId = '0'+paddedId;
+        }
+
+		let variationFolder = __dirname +'/variations/frame'+ paddedId;
+		if (fs.existsSync(variationFolder) ) {
+			let destFile = variationFolder + '/frame' + paddedId + '.jpg';
+			if (fs.existsSync(destFile)) {
+				fs.unlink(destFile);
+				message += 'File '+destFile+' deleted.';
+			}
+		}
+		else {
+			message += 'Folder '+variationFolder+' does not exist...';
+		}
+        
+	}
+    res.send();
+}
+app.get('/delete-fake-variations', deleteFakeVariations);
+*/
